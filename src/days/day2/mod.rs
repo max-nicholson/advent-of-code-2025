@@ -29,16 +29,10 @@ fn invalid_ids_with_exactly_one_repeated_sequence(range: IDRange) -> impl Iterat
             return false;
         }
 
-        let mut left = digits / 2;
-        let mut right = 0;
-
-        for _ in 0..(digits / 2) {
-            if s[left] != s[right] {
+        for right in 0..(digits / 2) {
+            if s[right + digits / 2] != s[right] {
                 return false;
             }
-
-            right += 1;
-            left += 1;
         }
 
         true
