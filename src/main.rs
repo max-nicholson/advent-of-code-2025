@@ -35,7 +35,10 @@ fn main() -> anyhow::Result<()> {
         1 => {
             day1::solve(input)?;
         }
-        2..25 => anyhow::bail!("no solution for {}", args.day),
+        2 => {
+            day2::solve(input)?;
+        }
+        3..=25 => anyhow::bail!("no solution for {}", args.day),
         _ => anyhow::bail!("expected day between 1 and 25, got {}", args.day),
     }
 
