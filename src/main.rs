@@ -32,16 +32,11 @@ fn main() -> anyhow::Result<()> {
     let input = fs::read_to_string(&path).context(path)?;
 
     match args.day {
-        1 => {
-            day1::solve(input)?;
-        }
-        2 => {
-            day2::solve(input)?;
-        }
-        3 => {
-            day3::solve(input)?;
-        }
-        4..=25 => anyhow::bail!("no solution for {}", args.day),
+        1 => day1::solve(input)?,
+        2 => day2::solve(input)?,
+        3 => day3::solve(input)?,
+        4 => day4::solve(input)?,
+        5..=25 => anyhow::bail!("no solution for {}", args.day),
         _ => anyhow::bail!("expected day between 1 and 25, got {}", args.day),
     }
 
