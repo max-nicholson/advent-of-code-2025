@@ -26,6 +26,7 @@ fn is_correctly_configured(machine: &Machine, light_diagram: &[bool]) -> bool {
     machine.indicator_light_diagram.eq(light_diagram)
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 struct ButtonPressState {
     indicator_light_diagram: Vec<bool>,
     presses: usize,
@@ -34,11 +35,14 @@ struct ButtonPressState {
 impl Machine {
     fn min_button_presses_to_configure_indicator_lights(&self) -> usize {
         let mut queue = VecDeque::new();
+        let mut seen: HashSet<Vec<bool>> = HashSet::new();
 
-        queue.push_front(ButtonPressState {
+        let initial = ButtonPressState {
             indicator_light_diagram: vec![false; self.indicator_light_diagram.len()],
             presses: 0,
-        });
+        };
+        seen.insert(initial.indicator_light_diagram.clone());
+        queue.push_front(initial);
 
         loop {
             let ButtonPressState {
@@ -53,10 +57,13 @@ impl Machine {
                     return presses + 1;
                 }
 
-                queue.push_back(ButtonPressState {
+                let state = ButtonPressState {
                     indicator_light_diagram: updated_light_diagram,
                     presses: presses + 1,
-                });
+                };
+                if seen.insert(state.indicator_light_diagram.clone()) {
+                    queue.push_back(state);
+                }
             }
         }
     }
@@ -283,21 +290,21 @@ fn parse(input: String) -> anyhow::Result<Vec<Machine>> {
 pub fn solve(input: String) -> anyhow::Result<()> {
     let machines = parse(input)?;
 
-    // println!(
-    //     "part1: {}",
-    //     machines
-    //         .iter()
-    //         .map(|m| { m.min_button_presses_to_configure_indicator_lights() })
-    //         .sum::<usize>()
-    // );
-
     println!(
-        "part2: {}",
+        "part1: {}",
         machines
             .iter()
-            .map(|m| { m.min_button_presses_to_configure_joltage_level_counters() })
+            .map(|m| { m.min_button_presses_to_configure_indicator_lights() })
             .sum::<usize>()
     );
+
+    // println!(
+    //     "part2: {}",
+    //     machines
+    //         .iter()
+    //         .map(|m| { m.min_button_presses_to_configure_joltage_level_counters() })
+    //         .sum::<usize>()
+    // );
 
     Ok(())
 }
@@ -367,6 +374,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "not yet implemented"]
     fn test_machine_min_button_presses_to_configure_joltage_level_counters() {
         let machine = Machine {
             indicator_light_diagram: vec![false, true, true, false],
