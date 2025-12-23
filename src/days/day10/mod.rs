@@ -76,8 +76,6 @@ impl Machine {
             })
             .collect();
 
-        buttons_by_counter.sort_by_key(|(i, buttons)| buttons.len());
-
         let mut joltage = vec![0usize; self.joltage_requirements.len()];
         let mut presses = 0;
 
@@ -97,79 +95,134 @@ impl Machine {
         //    3 buttons make 3
         //      need 7x (3), (1,3) and (2,3)
 
-        for (i, buttons) in buttons_by_counter {
-            let requirement = self.joltage_requirements[i];
+        while let Some((i, buttons)) = buttons_by_counter
+            .iter()
+            .find(|(_, buttons)| buttons.len() == 1)
+        {
+            let remaining = self.joltage_requirements[*i] - joltage[*i];
+            let button = buttons[0];
+            presses += remaining;
 
-            if buttons.len() == 1 {
-                presses += requirement;
+            let counters = &self.button_wiring_schematics[button];
 
-                let counters = &self.button_wiring_schematics[buttons[0]];
-
-                for counter in counters {
-                    joltage[*counter] += requirement;
-                }
-            } else {
-                // make up `requirement` from any combination of `buttons`
-                // e.g. max of button 1 is 10, max of button 2 is 5, requirement is 10,
-                // could be 5x1 and 5x2, or 6x1 and 4x2 etc.
-
-                // ideas:
-                // 1. prioritise smaller requirements first
-                // 2. prioritise using buttons affecting more counters
-
-                // TODO reframe the problem as "X lots of button a, b, c, Y lots of button b,c d etc."
-
-                // let mut queue: VecDeque<(Vec<usize>, usize)> = VecDeque::new();
-
-                // queue.push_back((joltage.clone(), presses));
-
-                // loop {
-                //     let (joltage_level_counters, presses) = queue.pop_front().unwrap();
-
-                //     let max_presses_per_button: Vec<usize> = self
-                //         .button_wiring_schematics
-                //         .iter()
-                //         .map(|button| {
-                //             joltage_level_counters
-                //                 .iter()
-                //                 .enumerate()
-                //                 .filter_map(|(i, &current)| {
-                //                     if !button.contains(&i) {
-                //                         None
-                //                     } else {
-                //                         let requirement = self.joltage_requirements[i];
-                //                         if requirement > current {
-                //                             Some(requirement - current)
-                //                         } else {
-                //                             None
-                //                         }
-                //                     }
-                //                 })
-                //                 .min()
-                //                 .unwrap_or_default()
-                //         })
-                //         .collect();
-
-                //     for (_, button) in max_presses_per_button
-                //         .iter()
-                //         .zip(&self.button_wiring_schematics)
-                //         .filter(|(max, _)| **max != 0)
-                //     {
-                //         let mut updated_joltage_levels = joltage_level_counters.clone();
-
-                //         for &counter in button {
-                //             updated_joltage_levels[counter] += 1;
-                //         }
-
-                //         if updated_joltage_levels.iter().eq(&self.joltage_requirements) {
-                //             return presses + 1;
-                //         }
-
-                //         queue.push_back((updated_joltage_levels, presses + 1));
-                //     }
-                // }
+            for counter in counters {
+                joltage[*counter] += remaining;
             }
+
+            buttons_by_counter.iter_mut().for_each(|(_, buttons)| {
+                if let Some(index) = buttons.iter().position(|value| *value == button) {
+                    buttons.swap_remove(index);
+                }
+            });
         }
+
+        // if self.joltage_requirements.iter().eq(&vec![21, 1, 163, 20]) {
+        //     dbg!(buttons_by_counter);
+        //     dbg!(&joltage);
+        // }
+
+        if joltage.iter().eq(&self.joltage_requirements) {
+            return presses;
+        }
+
+        let remainder: Vec<usize> = joltage
+            .iter()
+            .zip(&self.joltage_requirements)
+            .map(|(current, remainder)| remainder - current)
+            .collect();
+
+        // for (i, buttons) in buttons_by_counter {
+        //     let requirement = self.joltage_requirements[i];
+
+        //     if buttons.len() == 1 {
+        //         let button = buttons[0];
+        //         presses += requirement;
+
+        //         let counters = &self.button_wiring_schematics[button];
+
+        //         for counter in counters {
+        //             joltage[*counter] += requirement;
+        //         }
+
+        //         // for _ in 0..buttons_by_counter.len() {
+        //         //     let buttons = buttons_by_counter[button];
+
+        //         //     if buttons.1.contains(&button) {
+        //         //         buttons.1.remove(button);
+        //         //     }
+        //         // }
+        //     } else {
+        //         // make up `requirement` from any combination of `buttons`
+        //         // e.g. max of button 1 is 10, max of button 2 is 5, requirement is 10,
+        //         // could be 5x1 and 5x2, or 6x1 and 4x2 etc.
+
+        //         // ideas:
+        //         // 1. prioritise smaller requirements first
+        //         // 2. prioritise using buttons affecting more counters
+
+        //         // TODO reframe the problem as "X lots of button a, b, c, Y lots of button b,c d etc."
+
+        //         let mut i = 0;
+
+        //         let mut queue: VecDeque<(Vec<usize>, usize)> = VecDeque::new();
+        //         let mut seen: HashSet<(Vec<usize>, usize)> = HashSet::new();
+
+        //         queue.push_back((joltage.clone(), presses));
+        //         seen.insert((joltage, presses));
+
+        //         loop {
+        //             let (joltage_level_counters, presses) = queue.pop_front().unwrap();
+
+        //             i += 1;
+
+        //             let max_presses_per_button: Vec<usize> = self
+        //                 .button_wiring_schematics
+        //                 .iter()
+        //                 .map(|button| {
+        //                     joltage_level_counters
+        //                         .iter()
+        //                         .enumerate()
+        //                         .filter_map(|(i, &current)| {
+        //                             if !button.contains(&i) {
+        //                                 None
+        //                             } else {
+        //                                 let requirement = self.joltage_requirements[i];
+        //                                 if requirement > current {
+        //                                     Some(requirement - current)
+        //                                 } else {
+        //                                     None
+        //                                 }
+        //                             }
+        //                         })
+        //                         .min()
+        //                         .unwrap_or_default()
+        //                 })
+        //                 .collect();
+
+        //             for (_, button) in max_presses_per_button
+        //                 .iter()
+        //                 .zip(&self.button_wiring_schematics)
+        //                 .filter(|(max, _)| **max != 0)
+        //             {
+        //                 let mut updated_joltage_levels = joltage_level_counters.clone();
+
+        //                 for &counter in button {
+        //                     updated_joltage_levels[counter] += 1;
+        //                 }
+
+        //                 if updated_joltage_levels.iter().eq(&self.joltage_requirements) {
+        //                     dbg!(i);
+        //                     return presses + 1;
+        //                 }
+
+        //                 if !seen.contains(&(updated_joltage_levels.clone(), presses + 1)) {
+        //                     queue.push_back((updated_joltage_levels.clone(), presses + 1));
+        //                     seen.insert((updated_joltage_levels, presses + 1));
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         1
     }
