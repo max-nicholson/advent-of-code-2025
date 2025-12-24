@@ -1,3 +1,4 @@
+#![feature(result_option_map_or_default)]
 use std::fs;
 
 mod days;
@@ -42,7 +43,8 @@ fn main() -> anyhow::Result<()> {
         8 => day8::solve(input)?,
         9 => day9::solve(input)?,
         10 => day10::solve(input)?,
-        11..=12 => anyhow::bail!("no solution for {}", args.day),
+        11 => day11::solve(input)?,
+        12 => anyhow::bail!("no solution for {}", args.day),
         _ => anyhow::bail!("expected day between 1 and 12, got {}", args.day),
     }
 
